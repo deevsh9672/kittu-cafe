@@ -15,12 +15,13 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: '#FFFEFA',
           borderTopColor: '#EBE0D2',
-          height: 60,
+          height: 64,
           paddingBottom: 8,
           paddingTop: 6,
         },
         tabBarActiveTintColor: '#C86D51',
         tabBarInactiveTintColor: '#8D6E63',
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
       }}
     >
       <Tabs.Screen
@@ -28,6 +29,7 @@ export default function TabsLayout() {
         options={{
           title: 'Home',
           headerTitle: 'Kittu Cafe • Dausa',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 18 }}>🏠</Text>,
         }}
       />
       <Tabs.Screen
@@ -35,6 +37,7 @@ export default function TabsLayout() {
         options={{
           title: 'Menu',
           headerTitle: 'Digital Cafe Menu',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 18 }}>☕</Text>,
         }}
       />
       <Tabs.Screen
@@ -43,6 +46,7 @@ export default function TabsLayout() {
           title: 'Cart',
           headerTitle: 'Your Order Cart',
           tabBarBadge: totalCount > 0 ? totalCount : undefined,
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 18 }}>🛍️</Text>,
         }}
       />
       <Tabs.Screen
@@ -50,6 +54,7 @@ export default function TabsLayout() {
         options={{
           title: 'Orders',
           headerTitle: 'Your Orders',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 18 }}>📋</Text>,
         }}
       />
       <Tabs.Screen
@@ -57,6 +62,7 @@ export default function TabsLayout() {
         options={{
           title: 'Profile',
           headerTitle: 'About & Account',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 18 }}>👤</Text>,
         }}
       />
     </Tabs>
