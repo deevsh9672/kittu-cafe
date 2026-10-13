@@ -8,7 +8,7 @@ import {
   Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { BUSINESS_CONFIG } from '@kittu-cafe/shared';
+import { BUSINESS_CONFIG } from '../../constants/business';
 import { useMobileCart } from '../../store/useMobileCart';
 
 const BESTSELLERS = [

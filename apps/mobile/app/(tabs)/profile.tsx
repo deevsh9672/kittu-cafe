@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking } from 'react-native';
-import { BUSINESS_CONFIG } from '@kittu-cafe/shared';
+import { BUSINESS_CONFIG } from '../../constants/business';
 
 export default function MobileProfileScreen() {
   const handleCall = () => Linking.openURL(`tel:${BUSINESS_CONFIG.contactNumber}`);
