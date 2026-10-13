@@ -1,0 +1,7 @@
+name,category,basePriceInPaise,dietaryType,preparationTimeMinutes,description,isAvailable,isFeatured,isBestseller
+"Espresso Single Shot","Hot & Cold Coffee",8000,veg,5,"Intense concentrated espresso shot",true,false,false
+"Vanilla Latte","Hot & Cold Coffee",13000,veg,8,"Smooth espresso with steamed milk and vanilla syrup",true,true,false
+"Cheese Garlic Bread","Pizzas & Garlic Breads",11000,veg,10,"Fresh toasted baguette slices with herb butter and cheese",true,true,true
+"Cold Brew Tonic","Hot & Cold Coffee",16000,veg,6,"Slow-steeped cold brew over sparkling tonic and orange peel",true,false,false
+"Veg Club Sandwich","Burgers & Sandwiches",14000,veg,12,"Triple decker sandwich with fresh lettuce, cucumber, tomato and mint mayo",true,true,true
+"Oreo Mudslide Shake","Desserts & Shakes",16000,veg,10,"Thick ice cream shake blended with real Oreo cookies and chocolate fudge",true,true,true

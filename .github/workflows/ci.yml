@@ -1,0 +1,48 @@
+name: Kittu Cafe CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, master, staging]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test-and-verify:
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+
+      redis:
+        image: redis:7.2-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Monorepo Dependencies
+        run: npm ci
+
+      - name: Build Shared Types
+        run: npm run build --workspace=packages/shared
+
+      - name: Run Backend Automated Test Suite
+        env:
+          NODE_ENV: test
+          MONGODB_URI: mongodb://localhost:27017/kittu_cafe_ci
+          JWT_SECRET: ci_secret_key_dausa_2026
+        run: npm test --workspace=apps/backend
+
+      - name: Build Next.js Web & Admin Portal
+        run: npm run build --workspace=apps/web

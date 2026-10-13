@@ -1,0 +1,12 @@
+node_modules/
+.next/
+.expo/
+dist/
+build/
+*.log
+.env
+.env.local
+apps/mobile/android/.gradle
+apps/mobile/android/app/build
+apps/mobile/android/build
+apps/mobile/.expo

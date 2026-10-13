@@ -1,0 +1,28 @@
+{
+  "name": "kittu-cafe-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Production-ready Food Ordering & Cafe Management Platform for Kittu Cafe, Dausa, Rajasthan",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspace=apps/backend",
+    "dev:backend": "npm run dev --workspace=apps/backend",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "seed": "npm run seed --workspace=apps/backend"
+  },
+  "keywords": [
+    "restaurant-management",
+    "kds",
+    "food-ordering",
+    "kittu-cafe",
+    "rajasthan",
+    "pos",
+    "razorpay"
+  ],
+  "author": "Antigravity Engineering",
+  "license": "UNLICENSED"
+}
