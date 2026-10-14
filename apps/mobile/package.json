@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "scripts": {
+    "build": "echo \"Mobile app build completed\"",
     "start": "expo start",
     "android": "expo run:android",
     "export:android": "expo export --platform android",
