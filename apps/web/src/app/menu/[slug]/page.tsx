@@ -21,128 +21,13 @@ import { IMenuItem } from '@kittu-cafe/shared';
 import { formatPrice } from '../../../lib/api';
 import { useCartStore } from '../../../store/useCartStore';
 
-const DEMO_ITEMS: Record<string, IMenuItem> = {
-  'classic-handcrafted-cappuccino': {
-    _id: 'seed-coffee-1',
-    name: 'Classic Handcrafted Cappuccino',
-    description:
-      'Expertly pulled double-shot of 100% Arabica espresso crowned with a velvety blanket of micro-textured steamed whole milk. Finished with a delicate sprinkle of artisanal cocoa dust. Notes of dark chocolate and toasted hazelnuts.',
-    imageUrl: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=800&auto=format&fit=crop&q=80',
-    categoryId: 'c1',
-    basePriceInPaise: 11000,
-    dietaryType: 'veg',
-    isAvailable: true,
-    isFeatured: true,
-    isBestseller: true,
-    preparationTimeMinutes: 8,
-    variants: [
-      { name: 'Regular (250ml)', priceInPaise: 11000, isDefault: true },
-      { name: 'Large (350ml)', priceInPaise: 14000 },
-    ],
-    addOnGroups: [
-      {
-        title: 'Choose Milk Preference',
-        minSelections: 0,
-        maxSelections: 1,
-        items: [
-          { name: 'Oat Milk Alternative', priceInPaise: 3500 },
-          { name: 'Almond Milk Alternative', priceInPaise: 4000 },
-        ],
-      },
-      {
-        title: 'Flavor & Sweetener Add-ons',
-        minSelections: 0,
-        maxSelections: 2,
-        items: [
-          { name: 'Extra Double Espresso Shot', priceInPaise: 3000 },
-          { name: 'Madagascar Vanilla Syrup', priceInPaise: 2500 },
-          { name: 'Salted Caramel Drizzle', priceInPaise: 2500 },
-        ],
-      },
-    ],
-  },
-  'kittu-hazelnut-cold-coffee': {
-    _id: 'seed-coffee-2',
-    name: 'Kittu Hazelnut Cold Coffee',
-    description:
-      'Signature cafe favorite. Slow-brewed rich espresso blended with premium roasted hazelnut reduction, creamy dairy milk, and a scoop of artisanal vanilla ice cream. Served chilled with chocolate swirl.',
-    imageUrl: 'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?w=800&auto=format&fit=crop&q=80',
-    categoryId: 'c1',
-    basePriceInPaise: 14000,
-    dietaryType: 'veg',
-    isAvailable: true,
-    isFeatured: true,
-    isBestseller: true,
-    preparationTimeMinutes: 10,
-    variants: [
-      { name: 'Regular Glass (300ml)', priceInPaise: 14000, isDefault: true },
-      { name: 'Thick Frappe Mug (450ml)', priceInPaise: 17000 },
-    ],
-    addOnGroups: [
-      {
-        title: 'Toppings',
-        minSelections: 0,
-        maxSelections: 2,
-        items: [
-          { name: 'Whipped Cream Peak', priceInPaise: 2500 },
-          { name: 'Crushed Brownie Chunks', priceInPaise: 3500 },
-        ],
-      },
-    ],
-  },
-  'grilled-paneer-tikka-sandwich': {
-    _id: 'seed-sandwich-1',
-    name: 'Grilled Paneer Tikka Sandwich',
-    description:
-      'Fresh malai paneer cubes marinated in authentic tandoori spices and char-grilled with crunchy green capsicum and red onions. Layered with house-made mint coriander chutney and melted mozzarella between butter-toasted multigrain slices.',
-    imageUrl: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=800&auto=format&fit=crop&q=80',
-    categoryId: 'c2',
-    basePriceInPaise: 13000,
-    dietaryType: 'veg',
-    isAvailable: true,
-    isFeatured: true,
-    isBestseller: true,
-    preparationTimeMinutes: 12,
-    variants: [],
-    addOnGroups: [
-      {
-        title: 'Cheese & Sides',
-        minSelections: 0,
-        maxSelections: 2,
-        items: [
-          { name: 'Extra Melted Cheese Layer', priceInPaise: 2500 },
-          { name: 'Side of Masala Fries', priceInPaise: 4500 },
-        ],
-      },
-    ],
-  },
-  'veg-loaded-farmhouse-pizza': {
-    _id: 'seed-pizza-1',
-    name: 'Veg Loaded Farmhouse Pizza',
-    description:
-      'Hand-stretched artisanal dough baked at 350°C. Topped with rich Italian plum tomato marinara, fresh mozzarella, diced bell peppers, red onions, button mushrooms, black olives, and golden sweet corn.',
-    imageUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&auto=format&fit=crop&q=80',
-    categoryId: 'c3',
-    basePriceInPaise: 22000,
-    dietaryType: 'veg',
-    isAvailable: true,
-    isFeatured: true,
-    isBestseller: false,
-    preparationTimeMinutes: 18,
-    variants: [
-      { name: 'Medium (8 inch)', priceInPaise: 22000, isDefault: true },
-      { name: 'Large (10 inch)', priceInPaise: 32000 },
-    ],
-    addOnGroups: [
-      {
-        title: 'Crust Choice',
-        minSelections: 0,
-        maxSelections: 1,
-        items: [{ name: 'Cheese Burst Crust', priceInPaise: 6000 }],
-      },
-    ],
-  },
-};
+import { MENU_ITEMS } from '../../../data/menuData';
+
+const DEMO_ITEMS: Record<string, IMenuItem> = MENU_ITEMS.reduce((acc, it) => {
+  const s = it.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  acc[s] = it;
+  return acc;
+}, {} as Record<string, IMenuItem>);
 
 export default function MenuItemDetailPage() {
   const params = useParams();
@@ -167,7 +52,8 @@ export default function MenuItemDetailPage() {
     }
 
     // 2. Or try fetching from backend API
-    fetch(`http://localhost:5000/api/v1/menu`)
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+    fetch(`${apiUrl}/menu`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.data?.items) {
@@ -369,6 +255,72 @@ export default function MenuItemDetailPage() {
             <p className="text-sm text-[#5D4037] mt-3 leading-relaxed">
               {item.description}
             </p>
+
+            {/* Quick Nutrition & Spice Metrics */}
+            <div className="grid grid-cols-3 gap-2 py-3 px-4 rounded-2xl bg-[#FAF6F0] border border-[#EBE0D2] mt-4">
+              <div className="text-center">
+                <span className="block text-[10px] font-bold uppercase text-[#8D6E63] tracking-wider">
+                  Calories
+                </span>
+                <span className="text-xs sm:text-sm font-black text-[#231709]">
+                  {item.calories ? `${item.calories} kcal` : 'Fresh Daily'}
+                </span>
+              </div>
+              <div className="text-center border-x border-[#EBE0D2]">
+                <span className="block text-[10px] font-bold uppercase text-[#8D6E63] tracking-wider">
+                  Spice Profile
+                </span>
+                <span className="text-xs sm:text-sm font-black text-[#D97736]">
+                  {item.spiceLevel === 'hot'
+                    ? '🌶️🌶️🌶️ Hot'
+                    : item.spiceLevel === 'medium'
+                    ? '🌶️🌶️ Medium'
+                    : item.spiceLevel === 'mild'
+                    ? '🌶️ Mild'
+                    : '🌿 Non-Spicy'}
+                </span>
+              </div>
+              <div className="text-center">
+                <span className="block text-[10px] font-bold uppercase text-[#8D6E63] tracking-wider">
+                  Serving Size
+                </span>
+                <span className="text-xs sm:text-sm font-black text-[#231709] line-clamp-1">
+                  {item.servingSize || '1 Portion'}
+                </span>
+              </div>
+            </div>
+
+            {/* Key Ingredients */}
+            {item.ingredients && item.ingredients.length > 0 && (
+              <div className="mt-4">
+                <h4 className="text-xs font-black uppercase tracking-wider text-[#C86D51] mb-2">
+                  Key Artisanal Ingredients
+                </h4>
+                <div className="flex flex-wrap gap-1.5">
+                  {item.ingredients.map((ing) => (
+                    <span
+                      key={ing}
+                      className="inline-flex items-center gap-1 px-3 py-1 rounded-xl text-xs font-semibold bg-[#F5EBE1] text-[#3E2723] border border-[#DFCDB8]"
+                    >
+                      <Check className="w-3 h-3 text-emerald-600 stroke-[3]" />
+                      {ing}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Chef's Note */}
+            {item.chefNote && (
+              <div className="p-3.5 rounded-2xl bg-[#FFF8EE] border border-[#F3DFC1] mt-4">
+                <span className="text-[11px] font-black uppercase tracking-wider text-[#A0522D] block">
+                  👨‍🍳 Chef's Recommendation (Kittu Cafe Dausa)
+                </span>
+                <p className="text-xs text-[#5D4037] italic mt-0.5">
+                  "{item.chefNote}"
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Size / Variant Selector */}

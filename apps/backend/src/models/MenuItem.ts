@@ -14,6 +14,13 @@ export interface IMenuItemDocument extends Document {
   preparationTimeMinutes: number;
   variants: IMenuItemVariant[];
   addOnGroups: IAddOnGroup[];
+  ingredients?: string[];
+  spiceLevel?: string;
+  calories?: number;
+  rating?: number;
+  ratingCount?: number;
+  chefNote?: string;
+  servingSize?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -55,6 +62,13 @@ const MenuItemSchema = new Schema<IMenuItemDocument>(
         ],
       },
     ],
+    ingredients: [{ type: String }],
+    spiceLevel: { type: String, default: 'none' },
+    calories: { type: Number },
+    rating: { type: Number, default: 4.9 },
+    ratingCount: { type: Number, default: 120 },
+    chefNote: { type: String },
+    servingSize: { type: String },
   },
   { timestamps: true }
 );

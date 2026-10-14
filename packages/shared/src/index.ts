@@ -119,6 +119,13 @@ export interface IMenuItem {
   preparationTimeMinutes: number;
   variants: IMenuItemVariant[];
   addOnGroups: IAddOnGroup[];
+  ingredients?: string[];
+  spiceLevel?: 'none' | 'mild' | 'medium' | 'hot';
+  calories?: number;
+  rating?: number;
+  ratingCount?: number;
+  chefNote?: string;
+  servingSize?: string;
   createdAt?: string;
   updatedAt?: string;
 }
