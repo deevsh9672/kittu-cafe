@@ -68,13 +68,23 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-24 space-y-8">
       <div className="flex items-center justify-between">
-        <Link
-          href="/menu"
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#4E342E] hover:text-[#C86D51]"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Menu</span>
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/orders"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#4E342E] hover:text-[#C86D51]"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>My Orders</span>
+          </Link>
+          <span className="text-stone-300">•</span>
+          <Link
+            href={`/orders/${orderId}/track`}
+            className="inline-flex items-center gap-1 text-xs font-bold text-[#D97736] hover:underline"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Live Screen</span>
+          </Link>
+        </div>
         <span className="text-xs font-medium text-[#5D4037]">
           Order ID: <span className="font-mono font-bold text-[#231709]">{order?.orderNumber || orderId}</span>
         </span>

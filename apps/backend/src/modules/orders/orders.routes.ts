@@ -7,6 +7,7 @@ const router = Router();
 // Customer facing routes
 router.post('/calculate', OrdersController.calculate);
 router.post('/', OrdersController.createOrder); // Guest or authenticated
+router.get('/', OrdersController.adminGetOrders);
 router.get('/my-orders', authenticate, OrdersController.getMyOrders);
 router.get('/:id', OrdersController.getOrderById);
 router.patch('/:id/cancel', OrdersController.cancelOrder);

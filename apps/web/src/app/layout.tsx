@@ -19,6 +19,9 @@ export const metadata: Metadata = {
   },
 };
 
+import { WhatsAppChatbot } from '../components/WhatsAppChatbot';
+import { MobileQuickBar } from '../components/MobileQuickBar';
+
 export default function RootLayout({
   children,
 }: {
@@ -67,8 +70,10 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen flex flex-col bg-[#FFFEFA] text-[#231709] antialiased selection:bg-[#FBECE7] selection:text-[#C86D51]">
         <Navbar />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 pb-16 sm:pb-0">{children}</main>
         <Footer />
+        <WhatsAppChatbot />
+        <MobileQuickBar />
       </body>
     </html>
   );

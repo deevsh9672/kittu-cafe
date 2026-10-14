@@ -17,6 +17,9 @@ import inventoryRoutes from './modules/inventory/inventory.routes';
 import couponsRoutes from './modules/coupons/coupons.routes';
 import reportsRoutes from './modules/reports/reports.routes';
 import staffRoutes from './modules/staff/staff.routes';
+import suppliersRoutes from './modules/suppliers/suppliers.routes';
+import purchaseOrdersRoutes from './modules/purchase-orders/purchase-orders.routes';
+import expensesRoutes from './modules/expenses/expenses.routes';
 
 export function createApp(): Application {
   const app = express();
@@ -54,9 +57,13 @@ export function createApp(): Application {
   app.use(`${config.API_PREFIX}/kds`, kdsRoutes);
   app.use(`${config.API_PREFIX}/reservations`, reservationsRoutes);
   app.use(`${config.API_PREFIX}/admin/inventory`, inventoryRoutes);
+  app.use(`${config.API_PREFIX}/inventory`, inventoryRoutes);
   app.use(`${config.API_PREFIX}/coupons`, couponsRoutes);
   app.use(`${config.API_PREFIX}/admin/reports`, reportsRoutes);
   app.use(`${config.API_PREFIX}/admin/staff`, staffRoutes);
+  app.use(`${config.API_PREFIX}/admin/suppliers`, suppliersRoutes);
+  app.use(`${config.API_PREFIX}/admin/purchase-orders`, purchaseOrdersRoutes);
+  app.use(`${config.API_PREFIX}/admin/expenses`, expensesRoutes);
 
   // Global Error Handler
   app.use(errorHandler);

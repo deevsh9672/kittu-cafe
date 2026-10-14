@@ -7,6 +7,12 @@ import {
   MenuItemModel,
   IngredientModel,
   CouponModel,
+  InventoryItemModel,
+  InventoryMovementModel,
+  RecipeModel,
+  SupplierModel,
+  PurchaseOrderModel,
+  ExpenseModel,
 } from '../models';
 import { config } from '../config/env';
 import { BUSINESS_CONFIG } from '@kittu-cafe/shared';
@@ -23,6 +29,12 @@ export async function runSeed() {
     MenuItemModel.deleteMany({}),
     IngredientModel.deleteMany({}),
     CouponModel.deleteMany({}),
+    InventoryItemModel.deleteMany({}),
+    InventoryMovementModel.deleteMany({}),
+    RecipeModel.deleteMany({}),
+    SupplierModel.deleteMany({}),
+    PurchaseOrderModel.deleteMany({}),
+    ExpenseModel.deleteMany({}),
   ]);
 
   console.log('[Seed] 1. Initializing verified Kittu Cafe profile...');
@@ -136,7 +148,7 @@ export async function runSeed() {
   });
 
   console.log('[Seed] 4. Seeding Initial Menu items (Integer Paise representation)...');
-  await MenuItemModel.create([
+  const createdMenuItems = await MenuItemModel.create([
     {
       name: 'Classic Handcrafted Cappuccino',
       description: 'Rich double-shot espresso topped with velvet steamed milk froth.',
@@ -276,14 +288,260 @@ export async function runSeed() {
     },
   ]);
 
-  console.log('[Seed] 5. Creating Initial Ingredients for Stock Management...');
-  await IngredientModel.create([
-    { name: 'Roasted Coffee Beans', unit: 'grams', currentStock: 5000, lowStockThreshold: 1000, costPerUnitInPaise: 150 },
-    { name: 'Full Cream Milk', unit: 'ml', currentStock: 20000, lowStockThreshold: 3000, costPerUnitInPaise: 6 },
-    { name: 'Mozzarella Cheese', unit: 'grams', currentStock: 8000, lowStockThreshold: 1500, costPerUnitInPaise: 45 },
-    { name: 'Fresh Paneer', unit: 'grams', currentStock: 4000, lowStockThreshold: 1000, costPerUnitInPaise: 35 },
-    { name: 'Potato Fries (Frozen)', unit: 'grams', currentStock: 10000, lowStockThreshold: 2000, costPerUnitInPaise: 15 },
-    { name: 'Chocolate Fudge Brownie', unit: 'pieces', currentStock: 30, lowStockThreshold: 5, costPerUnitInPaise: 4000 },
+  console.log('[Seed] 5. Creating Cafe Suppliers...');
+  const supBev = await SupplierModel.create({
+    name: 'Dausa Beverage & Chiller Distributors',
+    contactPerson: 'Mukesh Sharma',
+    phone: '+91 98290 11223',
+    email: 'sales@dausabeverages.com',
+    address: 'Shop 14, Mandi Road, Dausa, Rajasthan 303303',
+    gstin: '08AAAAA0000A1Z5',
+    paymentTerms: 'Net 15 days',
+    categoriesSupplied: ['Cold Drinks', 'Energy Drinks', 'Packaged Water'],
+    notes: 'Primary supplier for Red Bull, Coke, and Sprite cans.',
+    isActive: true,
+  });
+
+  const supDairy = await SupplierModel.create({
+    name: 'Rajasthan Dairy & Farm Fresh',
+    contactPerson: 'Rajesh Meena',
+    phone: '+91 94140 44556',
+    email: 'orders@rajdairydausa.in',
+    address: 'Near Old Bus Stand, Dausa, Rajasthan 303303',
+    gstin: '08BBBBB1111B2Z4',
+    paymentTerms: 'Weekly Cash / UPI',
+    categoriesSupplied: ['Dairy', 'Paneer', 'Cheese'],
+    notes: 'Daily morning delivery of fresh cow milk and malai paneer.',
+    isActive: true,
+  });
+
+  console.log('[Seed] 6. Creating Packaged Beverages and Food Ingredients...');
+  const bevRedBull = await InventoryItemModel.create({
+    name: 'Red Bull Energy Drink',
+    sku: 'BEV-RB-250',
+    barcode: '9002490100070',
+    itemType: 'beverage',
+    category: 'Energy Drinks',
+    brand: 'Red Bull',
+    packageSize: '250ml',
+    stockUnit: 'can',
+    openingStock: 24,
+    currentQuantity: 24,
+    minStockThreshold: 6,
+    reorderQuantity: 24,
+    purchasePriceInPaise: 9500, // ₹95.00
+    sellingPriceInPaise: 12500, // ₹125.00
+    supplierId: supBev._id,
+    storageLocation: 'Beverage Chiller A',
+    imageUrl: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=600&q=80',
+    isActive: true,
+  });
+
+  const bevCoke = await InventoryItemModel.create({
+    name: 'Coca-Cola Can',
+    sku: 'BEV-COKE-330',
+    barcode: '5449000000996',
+    itemType: 'beverage',
+    category: 'Cold Drinks',
+    brand: 'Coca-Cola',
+    packageSize: '330ml',
+    stockUnit: 'can',
+    openingStock: 48,
+    currentQuantity: 48,
+    minStockThreshold: 12,
+    reorderQuantity: 48,
+    purchasePriceInPaise: 3000, // ₹30.00
+    sellingPriceInPaise: 4000, // ₹40.00
+    supplierId: supBev._id,
+    storageLocation: 'Beverage Chiller B',
+    imageUrl: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80',
+    isActive: true,
+  });
+
+  const bevSprite = await InventoryItemModel.create({
+    name: 'Sprite Can',
+    sku: 'BEV-SPRITE-330',
+    barcode: '5449000014528',
+    itemType: 'beverage',
+    category: 'Cold Drinks',
+    brand: 'Sprite',
+    packageSize: '330ml',
+    stockUnit: 'can',
+    openingStock: 24,
+    currentQuantity: 24,
+    minStockThreshold: 8,
+    reorderQuantity: 24,
+    purchasePriceInPaise: 3000,
+    sellingPriceInPaise: 4000,
+    supplierId: supBev._id,
+    storageLocation: 'Beverage Chiller B',
+    imageUrl: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?auto=format&fit=crop&w=600&q=80',
+    isActive: true,
+  });
+
+  const bevWater = await InventoryItemModel.create({
+    name: 'Packaged Drinking Water (Kinley)',
+    sku: 'BEV-WATER-500',
+    itemType: 'beverage',
+    category: 'Packaged Water',
+    brand: 'Kinley',
+    packageSize: '500ml',
+    stockUnit: 'bottle',
+    openingStock: 60,
+    currentQuantity: 60,
+    minStockThreshold: 15,
+    reorderQuantity: 60,
+    purchasePriceInPaise: 1000,
+    sellingPriceInPaise: 2000,
+    supplierId: supBev._id,
+    storageLocation: 'Front Counter Rack',
+    imageUrl: 'https://images.unsplash.com/photo-1548839140-29a749e1bc4e?auto=format&fit=crop&w=600&q=80',
+    isActive: true,
+  });
+
+  const ingMilk = await InventoryItemModel.create({
+    name: 'Fresh Cow Milk (Dairy Gold)',
+    sku: 'ING-MILK-L',
+    itemType: 'ingredient',
+    category: 'Dairy',
+    packageSize: '1L Pouch',
+    stockUnit: 'L',
+    openingStock: 30,
+    currentQuantity: 30,
+    minStockThreshold: 5,
+    reorderQuantity: 20,
+    purchasePriceInPaise: 6400, // ₹64/L
+    supplierId: supDairy._id,
+    storageLocation: 'Dairy Fridge 1',
+    isActive: true,
+  });
+
+  const ingCoffee = await InventoryItemModel.create({
+    name: 'Roasted Arabica Coffee Beans',
+    sku: 'ING-COFFEE-KG',
+    itemType: 'ingredient',
+    category: 'Coffee',
+    packageSize: '1kg Bag',
+    stockUnit: 'kg',
+    openingStock: 10,
+    currentQuantity: 10,
+    minStockThreshold: 2,
+    reorderQuantity: 5,
+    purchasePriceInPaise: 85000, // ₹850/kg
+    storageLocation: 'Dry Pantry Bin 2',
+    isActive: true,
+  });
+
+  const ingCheese = await InventoryItemModel.create({
+    name: 'Mozzarella Cheese Blend',
+    sku: 'ING-CHEESE-KG',
+    itemType: 'ingredient',
+    category: 'Dairy',
+    packageSize: '1kg Shredded',
+    stockUnit: 'kg',
+    openingStock: 12,
+    currentQuantity: 12,
+    minStockThreshold: 3,
+    reorderQuantity: 8,
+    purchasePriceInPaise: 48000,
+    supplierId: supDairy._id,
+    storageLocation: 'Dairy Freezer',
+    isActive: true,
+  });
+
+  const ingPizzaBase = await InventoryItemModel.create({
+    name: 'Stone Baked Pizza Base (8-inch)',
+    sku: 'ING-PIZZABASE-8',
+    itemType: 'ingredient',
+    category: 'Bakery',
+    packageSize: 'Pack of 5',
+    stockUnit: 'piece',
+    openingStock: 40,
+    currentQuantity: 40,
+    minStockThreshold: 10,
+    reorderQuantity: 30,
+    purchasePriceInPaise: 2500,
+    storageLocation: 'Bakery Rack',
+    isActive: true,
+  });
+
+  console.log('[Seed] 7. Creating Initial Stock Movements in Immutable Ledger...');
+  await InventoryMovementModel.create([
+    {
+      inventoryItemId: bevRedBull._id,
+      operationType: 'purchase_receipt',
+      previousQuantity: 0,
+      newQuantity: 24,
+      changeQuantity: 24,
+      unitCostInPaise: 9500,
+      totalCostInPaise: 228000,
+      reason: 'Initial Opening Stock receipt from PO-2026-001',
+      referenceId: 'PO-2026-001',
+      performedBy: 'admin',
+      timestamp: new Date(),
+    },
+    {
+      inventoryItemId: bevCoke._id,
+      operationType: 'purchase_receipt',
+      previousQuantity: 0,
+      newQuantity: 48,
+      changeQuantity: 48,
+      unitCostInPaise: 3000,
+      totalCostInPaise: 144000,
+      reason: 'Initial Opening Stock receipt from PO-2026-001',
+      referenceId: 'PO-2026-001',
+      performedBy: 'admin',
+      timestamp: new Date(),
+    },
+  ]);
+
+  console.log('[Seed] 8. Creating Recipe Mappings for Auto-Deductions...');
+  const cappItem = createdMenuItems.find((i: any) => i.name.includes('Cappuccino'));
+  if (cappItem) {
+    await RecipeModel.create({
+      menuItemId: cappItem._id,
+      name: 'Classic Handcrafted Cappuccino Recipe',
+      ingredients: [
+        { inventoryItemId: ingCoffee._id, ingredientName: ingCoffee.name, quantityRequired: 0.015, unit: 'kg' }, // 15g
+        { inventoryItemId: ingMilk._id, ingredientName: ingMilk.name, quantityRequired: 0.2, unit: 'L' }, // 200ml
+      ],
+      version: 1,
+      isActive: true,
+    });
+  }
+
+  const pizzaItem = createdMenuItems.find((i: any) => i.name.includes('Pizza'));
+  if (pizzaItem) {
+    await RecipeModel.create({
+      menuItemId: pizzaItem._id,
+      name: 'Veg Loaded Farmhouse Pizza Recipe',
+      ingredients: [
+        { inventoryItemId: ingPizzaBase._id, ingredientName: ingPizzaBase.name, quantityRequired: 1, unit: 'piece' },
+        { inventoryItemId: ingCheese._id, ingredientName: ingCheese.name, quantityRequired: 0.15, unit: 'kg' }, // 150g
+      ],
+      version: 1,
+      isActive: true,
+    });
+  }
+
+  console.log('[Seed] 9. Creating Operating Expenses for Financial Reports...');
+  await ExpenseModel.create([
+    {
+      title: 'Monthly Cafe Store Rent (Shiv Colony, Dausa)',
+      category: 'rent',
+      amountInPaise: 2500000, // ₹25,000.00
+      date: new Date(Date.now() - 86400000 * 5),
+      description: 'Monthly commercial rental for Kittu Cafe building',
+      recordedBy: 'admin',
+    },
+    {
+      title: 'Commercial 3-Phase Power Bill (JVVNL Dausa)',
+      category: 'utilities',
+      amountInPaise: 685000, // ₹6,850.00
+      date: new Date(Date.now() - 86400000 * 3),
+      description: 'Chiller, oven, and espresso machine electricity consumption',
+      recordedBy: 'admin',
+    },
   ]);
 
   console.log('[Seed] 6. Creating Promotional Coupons...');

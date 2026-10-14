@@ -62,25 +62,61 @@ export const Footer: React.FC = () => {
           {/* Quick Links & Legal */}
           <div className="space-y-3">
             <h4 className="text-sm font-semibold tracking-wider text-[#D97736] uppercase">Explore</h4>
-            <ul className="space-y-2 text-sm text-[#DFCDB8]">
+            <ul className="space-y-1.5 text-xs text-[#DFCDB8]">
               <li>
                 <Link href="/menu" className="hover:text-white transition-colors">
-                  Online Food Menu
+                  Digital Menu & Ordering
+                </Link>
+              </li>
+              <li>
+                <Link href="/offers" className="hover:text-white transition-colors">
+                  Deals & Promo Offers
+                </Link>
+              </li>
+              <li>
+                <Link href="/gallery" className="hover:text-white transition-colors">
+                  Photo Gallery
                 </Link>
               </li>
               <li>
                 <Link href="/book-table" className="hover:text-white transition-colors">
-                  Reserve a Table
+                  Book a Table
                 </Link>
               </li>
               <li>
-                <Link href="/admin" className="hover:text-white transition-colors flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#D97736]" />
-                  <span>Admin & KDS Portal</span>
+                <Link href="/about" className="hover:text-white transition-colors">
+                  About Kittu Cafe
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="hover:text-white transition-colors">
+                  Contact & Directions
                 </Link>
               </li>
             </ul>
           </div>
+        </div>
+
+        {/* Legal Policies & Staff Link Bar */}
+        <div className="pt-6 pb-2 border-t border-[#3E2723]/60 flex flex-wrap items-center justify-between text-xs text-[#DFCDB8] gap-3">
+          <div className="flex flex-wrap items-center gap-4">
+            <Link href="/privacy-policy" className="hover:text-[#D97736] transition-colors">
+              Privacy Policy
+            </Link>
+            <span>&bull;</span>
+            <Link href="/terms" className="hover:text-[#D97736] transition-colors">
+              Terms of Service
+            </Link>
+            <span>&bull;</span>
+            <Link href="/refund-policy" className="hover:text-[#D97736] transition-colors">
+              Refund & Cancellation
+            </Link>
+          </div>
+
+          <Link href="/admin/login" className="hover:text-white transition-colors flex items-center gap-1.5 font-bold text-[#D97736]">
+            <ShieldCheck className="w-4 h-4" />
+            <span>Staff / Admin Login</span>
+          </Link>
         </div>
 
         <div className="pt-8 border-t border-[#3E2723]/60 flex flex-col sm:flex-row items-center justify-between text-xs text-[#DFCDB8] gap-4">

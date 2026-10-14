@@ -59,9 +59,25 @@ export default function KdsPage() {
     })
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && data.data?.orders) {
-          setOrders(data.data.orders);
+        let serverOrders: any[] = [];
+        if (data.success && Array.isArray(data.data?.orders)) {
+          serverOrders = data.data.orders;
         }
+        let localShared: any[] = [];
+        if (typeof window !== 'undefined') {
+          try {
+            localShared = JSON.parse(localStorage.getItem('kittu_shared_orders') || '[]');
+          } catch {}
+        }
+        const activeLocal = localShared.filter(
+          (o: any) => o.status !== 'completed' && o.status !== 'cancelled'
+        );
+        const unique = new Map<string, any>();
+        for (const o of [...activeLocal, ...serverOrders, ...DEMO_KDS_ORDERS]) {
+          const key = o._id || o.orderNumber;
+          if (!unique.has(key)) unique.set(key, o);
+        }
+        setOrders(Array.from(unique.values()));
       })
       .catch((err) => console.warn('Using seeded KDS queue:', err));
   };

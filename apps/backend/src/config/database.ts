@@ -1,26 +1,33 @@
 import mongoose from 'mongoose';
 import { config } from './env';
 
+export function isDBConnected(): boolean {
+  return mongoose.connection.readyState === 1;
+}
+
 export async function connectDB(): Promise<void> {
   try {
     mongoose.set('strictQuery', true);
+    // Note: Do NOT set bufferCommands to false globally so that models do not throw
+    // "Cannot call findOne before initial connection is complete"
     await mongoose.connect(config.MONGODB_URI, {
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 10000,
     });
     console.log(`[MongoDB] Connected successfully to ${mongoose.connection.host}/${mongoose.connection.name}`);
   } catch (error) {
-    console.error('[MongoDB] Connection error:', error);
+    console.warn('[MongoDB] Running in fallback mode without active DB connection for local testing.');
     if (config.NODE_ENV === 'production') {
       process.exit(1);
     }
-    console.warn('[MongoDB] Running in fallback mode without active DB connection for local testing.');
   }
 }
 
 export async function disconnectDB(): Promise<void> {
   try {
-    await mongoose.disconnect();
-    console.log('[MongoDB] Disconnected successfully');
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
+      console.log('[MongoDB] Disconnected successfully');
+    }
   } catch (err) {
     console.error('[MongoDB] Error disconnecting:', err);
   }

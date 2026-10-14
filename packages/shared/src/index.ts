@@ -226,6 +226,85 @@ export interface ICoupon {
   isActive: boolean;
 }
 
+export interface IInventoryItem {
+  _id: string;
+  name: string;
+  itemType: 'beverage' | 'ingredient' | 'packaging';
+  category?: string;
+  currentStock: number;
+  minimumThreshold: number;
+  unit: string;
+  costPerUnitInPaise?: number;
+  sellingPriceInPaise?: number;
+  packageSize?: string;
+  supplierId?: string;
+  lastUpdated?: string;
+}
+
+export interface IInventoryMovement {
+  _id: string;
+  itemId: string;
+  itemName: string;
+  operationType: 'stock_in' | 'stock_out' | 'sale' | 'wastage' | 'adjustment' | 'purchase_order_receipt';
+  quantity: number;
+  previousStock: number;
+  newStock: number;
+  costPerUnitInPaise?: number;
+  totalCostInPaise?: number;
+  reason: string;
+  referenceId?: string;
+  staffName?: string;
+  createdAt: string;
+}
+
+export interface ISupplier {
+  _id: string;
+  name: string;
+  contactPerson?: string;
+  phone: string;
+  email?: string;
+  address?: string;
+  gstin?: string;
+  paymentTerms?: string;
+  categoriesSupplied?: string[];
+  isActive: boolean;
+}
+
+export interface IPurchaseOrderItem {
+  itemId: string;
+  itemName: string;
+  orderedQuantity: number;
+  receivedQuantity: number;
+  unitCostInPaise: number;
+  totalCostInPaise: number;
+}
+
+export interface IPurchaseOrder {
+  _id: string;
+  poNumber: string;
+  supplierId: string;
+  supplierName: string;
+  status: 'draft' | 'ordered' | 'partial' | 'received' | 'cancelled';
+  orderDate: string;
+  expectedDate?: string;
+  receivedDate?: string;
+  invoiceNumber?: string;
+  items: IPurchaseOrderItem[];
+  totalAmountInPaise: number;
+  notes?: string;
+}
+
+export interface IExpense {
+  _id: string;
+  title: string;
+  category: 'rent' | 'utilities' | 'supplies' | 'maintenance' | 'marketing' | 'salaries' | 'other';
+  amountInPaise: number;
+  date: string;
+  paymentMethod?: string;
+  notes?: string;
+  recordedBy?: string;
+}
+
 export interface ApiResponse<T = any> {
   success: boolean;
   message?: string;

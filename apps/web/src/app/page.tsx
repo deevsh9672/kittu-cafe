@@ -16,15 +16,20 @@ import {
   Award,
   Star,
   CheckCircle2,
+  ChevronRight,
+  Utensils,
+  Plus,
 } from 'lucide-react';
 import { BUSINESS_CONFIG, IMenuItem } from '@kittu-cafe/shared';
 import { ProductCard } from '../components/ProductCard';
+import { useCartStore } from '../store/useCartStore';
 
 const DEFAULT_FEATURED: IMenuItem[] = [
   {
     _id: 'seed-coffee-1',
     name: 'Classic Handcrafted Cappuccino',
     description: 'Rich double-shot espresso topped with velvet steamed milk froth.',
+    imageUrl: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=900&auto=format&fit=crop&q=85',
     categoryId: 'c1',
     basePriceInPaise: 11000,
     dietaryType: 'veg',
@@ -52,6 +57,7 @@ const DEFAULT_FEATURED: IMenuItem[] = [
     _id: 'seed-coffee-2',
     name: 'Kittu Hazelnut Cold Coffee',
     description: 'Creamy chilled thick blend with roasted hazelnut syrup and ice cream.',
+    imageUrl: 'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?w=900&auto=format&fit=crop&q=85',
     categoryId: 'c1',
     basePriceInPaise: 14000,
     dietaryType: 'veg',
@@ -69,6 +75,7 @@ const DEFAULT_FEATURED: IMenuItem[] = [
     _id: 'seed-sandwich-1',
     name: 'Grilled Paneer Tikka Sandwich',
     description: 'Marinated cottage cheese, capsicum, onions, mint chutney, and molten cheese.',
+    imageUrl: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=900&auto=format&fit=crop&q=85',
     categoryId: 'c2',
     basePriceInPaise: 13000,
     dietaryType: 'veg',
@@ -80,15 +87,31 @@ const DEFAULT_FEATURED: IMenuItem[] = [
     addOnGroups: [],
   },
   {
+    _id: 'seed-burger-1',
+    name: 'Crispy Veg Supreme Burger',
+    description: 'Spiced potato & herb patty with crisp lettuce, sliced tomato, cheese, and special cafe dressing.',
+    imageUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=900&auto=format&fit=crop&q=85',
+    categoryId: 'c2',
+    basePriceInPaise: 12000,
+    dietaryType: 'veg',
+    isAvailable: true,
+    isFeatured: true,
+    isBestseller: true,
+    preparationTimeMinutes: 10,
+    variants: [],
+    addOnGroups: [],
+  },
+  {
     _id: 'seed-pizza-1',
     name: 'Veg Loaded Farmhouse Pizza',
     description: 'Crispy base loaded with fresh mozzarella, capsicum, red onions, and sweet corn.',
+    imageUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=900&auto=format&fit=crop&q=85',
     categoryId: 'c3',
     basePriceInPaise: 22000,
     dietaryType: 'veg',
     isAvailable: true,
     isFeatured: true,
-    isBestseller: false,
+    isBestseller: true,
     preparationTimeMinutes: 18,
     variants: [
       { name: 'Medium (8 inch)', priceInPaise: 22000, isDefault: true },
@@ -96,26 +119,108 @@ const DEFAULT_FEATURED: IMenuItem[] = [
     ],
     addOnGroups: [],
   },
+  {
+    _id: 'seed-snacks-1',
+    name: 'Peri Peri Masala Fries',
+    description: 'Crispy golden potato fries tossed in fiery African peri peri spice blend.',
+    imageUrl: 'https://images.unsplash.com/photo-1576107232684-1279f3908594?w=900&auto=format&fit=crop&q=85',
+    categoryId: 'c4',
+    basePriceInPaise: 9000,
+    dietaryType: 'veg',
+    isAvailable: true,
+    isFeatured: true,
+    isBestseller: true,
+    preparationTimeMinutes: 8,
+    variants: [],
+    addOnGroups: [],
+  },
+  {
+    _id: 'seed-dessert-1',
+    name: 'Sizzling Hot Brownie with Vanilla Ice Cream',
+    description: 'Warm fudge brownie served sizzling with rich chocolate sauce and cold vanilla ice cream.',
+    imageUrl: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=900&auto=format&fit=crop&q=85',
+    categoryId: 'c5',
+    basePriceInPaise: 15000,
+    dietaryType: 'veg',
+    isAvailable: true,
+    isFeatured: true,
+    isBestseller: true,
+    preparationTimeMinutes: 10,
+    variants: [],
+    addOnGroups: [],
+  },
+  {
+    _id: 'seed-dessert-2',
+    name: 'Belgian Chocolate Thick Shake',
+    description: 'Rich dark chocolate ganache blended with premium dairy cream and ice cream.',
+    imageUrl: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=900&auto=format&fit=crop&q=85',
+    categoryId: 'c5',
+    basePriceInPaise: 16000,
+    dietaryType: 'veg',
+    isAvailable: true,
+    isFeatured: true,
+    isBestseller: true,
+    preparationTimeMinutes: 7,
+    variants: [],
+    addOnGroups: [],
+  },
+];
+
+const CATEGORIES = [
+  { id: 'all', label: 'All Specialties' },
+  { id: 'c1', label: '☕ Artisanal Coffee' },
+  { id: 'c2', label: '🥪 Burgers & Sandwiches' },
+  { id: 'c3', label: '🍕 Stone Pizzas' },
+  { id: 'c4', label: '🍟 Snacks & Sides' },
+  { id: 'c5', label: '🍨 Shakes & Desserts' },
 ];
 
 export default function HomePage() {
   const [featuredItems, setFeaturedItems] = useState<IMenuItem[]>(DEFAULT_FEATURED);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [spotlightIndex, setSpotlightIndex] = useState<number>(0);
+  const addItem = useCartStore((state) => state.addItem);
 
   useEffect(() => {
     fetch('http://localhost:5000/api/v1/menu?isFeatured=true')
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.data?.items?.length > 0) {
-          setFeaturedItems(data.data.items);
+          // Merge with high-def default images if incoming backend data is missing images
+          const merged = data.data.items.map((item: IMenuItem) => {
+            const fallback = DEFAULT_FEATURED.find((d) => d._id === item._id || d.name === item.name);
+            return {
+              ...item,
+              imageUrl: item.imageUrl || fallback?.imageUrl,
+            };
+          });
+          setFeaturedItems(merged);
         }
       })
       .catch(() => {});
   }, []);
 
+  const filteredItems = selectedCategory === 'all'
+    ? featuredItems
+    : featuredItems.filter((item) => item.categoryId === selectedCategory);
+
+  const spotlightItem = featuredItems[spotlightIndex] || featuredItems[0];
+
+  const handleSpotlightAdd = () => {
+    if (!spotlightItem) return;
+    addItem({
+      menuItemId: spotlightItem._id,
+      name: spotlightItem.name,
+      unitPriceInPaise: spotlightItem.basePriceInPaise,
+      quantity: 1,
+      imageUrl: spotlightItem.imageUrl,
+    });
+  };
+
   return (
     <div className="space-y-20 pb-28">
       {/* 3D Premium Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-[#FAF4EC] via-[#FFFDF9] to-[#FAF6F0] pt-14 pb-24 border-b border-[#EBE0D2]/80">
+      <section className="relative overflow-hidden bg-gradient-to-b from-[#FAF4EC] via-[#FFFDF9] to-[#FAF6F0] pt-12 pb-20 border-b border-[#EBE0D2]/80">
         {/* Soft Ambient 3D Glow Backdrops */}
         <div className="absolute top-10 left-1/4 w-96 h-96 bg-[#D97736]/10 rounded-full blur-3xl pointer-events-none -z-10" />
         <div className="absolute bottom-10 right-10 w-80 h-80 bg-[#C86D51]/10 rounded-full blur-2xl pointer-events-none -z-10" />
@@ -135,47 +240,49 @@ export default function HomePage() {
 
               {/* Main Headline */}
               <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-[#231709] leading-[1.12]">
-                Artisanal Brews & Handcrafted Bites in{' '}
+                Your Favourite Flavours,{' '}
                 <span className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-[#D97736] to-[#C86D51]">
-                  Dausa
+                  All in One Place.
                   <span className="absolute left-0 bottom-1 w-full h-2 bg-[#D97736]/20 -z-10 rounded-full" />
                 </span>
               </h1>
 
               <p className="text-base sm:text-lg text-[#5D4037] leading-relaxed max-w-xl font-medium">
-                Experience warm cafe luxury. Freshly roasted espresso blends, stone-baked pizzas, gourmet grilled sandwiches, and thick cold frappes prepared to perfection.
+                Experience warm cafe luxury in Dausa. Freshly roasted arabica espresso blends, gourmet grilled sandwiches, sizzling farm pizzas, and chilled energy drinks.
               </p>
 
               {/* 3D Tactile Buttons */}
               <div className="flex flex-wrap items-center gap-4 pt-2">
                 <Link
                   href="/menu"
-                  className="px-7 py-4 rounded-2xl btn-3d-primary text-white font-extrabold text-sm flex items-center gap-2.5 cursor-pointer"
+                  className="px-7 py-4 rounded-2xl btn-3d-primary text-white font-extrabold text-sm flex items-center gap-2.5 cursor-pointer shadow-lg"
                 >
                   <ShoppingBag className="w-4 h-4 text-[#D97736]" />
-                  <span>Order Food Online</span>
+                  <span>Explore Menu</span>
                   <ArrowRight className="w-4 h-4 text-white" />
                 </Link>
 
                 <Link
-                  href="/book-table"
-                  className="px-6 py-4 rounded-2xl btn-3d-light text-[#231709] font-extrabold text-sm flex items-center gap-2 border border-[#EBE0D2] cursor-pointer"
+                  href="/menu"
+                  className="px-6 py-4 rounded-2xl btn-3d-accent text-white font-extrabold text-sm flex items-center gap-2 cursor-pointer shadow-lg"
                 >
-                  <Calendar className="w-4 h-4 text-[#C86D51]" />
-                  <span>Reserve Table</span>
+                  <Sparkles className="w-4 h-4 text-amber-200" />
+                  <span>Order Now</span>
                 </Link>
 
                 <a
-                  href={`tel:${BUSINESS_CONFIG.contactNumber}`}
-                  className="px-4 py-3 text-xs font-bold text-[#4E342E] hover:text-[#C86D51] flex items-center gap-1.5 transition-colors"
+                  href={BUSINESS_CONFIG.mapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-4 rounded-2xl btn-3d-light text-[#231709] font-extrabold text-sm flex items-center gap-2 border border-[#EBE0D2] cursor-pointer"
                 >
-                  <Phone className="w-4 h-4 text-[#D97736]" />
-                  <span>+91 95113 17456</span>
+                  <MapPin className="w-4 h-4 text-[#C86D51]" />
+                  <span>Get Directions</span>
                 </a>
               </div>
 
               {/* 3D Elevated Feature Metrics */}
-              <div className="grid grid-cols-3 gap-4 pt-6 border-t border-[#EBE0D2]/70">
+              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-[#EBE0D2]/70">
                 <div className="bg-white/80 backdrop-blur-xs p-3.5 rounded-2xl border border-[#EBE0D2] shadow-3d text-center">
                   <span className="block text-xl font-black text-[#231709]">100%</span>
                   <span className="text-[11px] font-bold text-[#5D4037]">Pure & Fresh</span>
@@ -191,24 +298,25 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right Column: 3D Luxury Showcase Card */}
+            {/* Right Column: 3D Interactive Signature Spotlight Card */}
             <div className="lg:col-span-5">
               <div className="relative">
-                {/* 3D Decorative Floating Ring */}
-                <div className="absolute -top-6 -right-6 w-20 h-20 rounded-3xl bg-gradient-to-br from-[#D97736] to-[#C86D51] opacity-20 blur-xl animate-float pointer-events-none" />
+                {/* 3D Decorative Floating Glow */}
+                <div className="absolute -top-6 -right-6 w-32 h-32 rounded-3xl bg-gradient-to-br from-[#D97736] to-[#C86D51] opacity-25 blur-2xl animate-float pointer-events-none" />
 
                 {/* 3D Showcase Panel */}
-                <div className="rounded-3xl glass-dark-3d p-7 text-white space-y-6 animate-float relative overflow-hidden">
-                  <div className="flex items-center justify-between pb-4 border-b border-white/10">
+                <div className="rounded-3xl glass-dark-3d p-6 sm:p-7 text-white space-y-5 animate-float relative overflow-hidden shadow-2xl border border-white/10">
+                  {/* Header */}
+                  <div className="flex items-center justify-between pb-3 border-b border-white/10">
                     <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#D97736] to-[#C86D51] flex items-center justify-center text-white shadow-lg">
-                        <Coffee className="w-6 h-6" />
+                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#D97736] to-[#C86D51] flex items-center justify-center text-white shadow-lg">
+                        <Coffee className="w-5 h-5" />
                       </div>
                       <div>
-                        <h3 className="font-extrabold text-base text-white tracking-tight leading-tight">
-                          Kittu Cafe Dausa
+                        <h3 className="font-extrabold text-sm text-white tracking-tight leading-tight">
+                          Chef's 3D Spotlight
                         </h3>
-                        <p className="text-[11px] text-[#DFCDB8]">Artisanal Kitchen & Espresso</p>
+                        <p className="text-[10px] text-[#DFCDB8]">Freshly Crafted in Shiv Colony</p>
                       </div>
                     </div>
                     <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
@@ -216,41 +324,73 @@ export default function HomePage() {
                     </span>
                   </div>
 
-                  {/* Highlights list */}
-                  <div className="space-y-3 bg-black/25 rounded-2xl p-4 border border-white/5">
-                    <div className="flex items-center justify-between text-xs text-[#DFCDB8]">
-                      <span className="flex items-center gap-2">
-                        <Clock className="w-3.5 h-3.5 text-[#D97736]" /> Daily Service
-                      </span>
-                      <span className="font-bold text-white">10:00 AM – 10:30 PM</span>
+                  {/* 3D Dish Image with Floating Badges */}
+                  <div className="relative rounded-2xl overflow-hidden h-52 bg-black/40 border border-white/10 group">
+                    <img
+                      src={spotlightItem.imageUrl}
+                      alt={spotlightItem.name}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    
+                    {/* Steam Badge Animation */}
+                    <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-[10px] font-bold text-amber-300 flex items-center gap-1.5 animate-steam">
+                      <span>♨️</span>
+                      <span>Freshly Prepared</span>
                     </div>
-                    <div className="flex items-center justify-between text-xs text-[#DFCDB8]">
-                      <span className="flex items-center gap-2">
-                        <MapPin className="w-3.5 h-3.5 text-[#D97736]" /> Verified Address
-                      </span>
-                      <span className="font-bold text-white">Shiv Colony, Dausa</span>
+
+                    <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-[#D97736] text-white text-[10px] font-black tracking-wider uppercase shadow-md">
+                      ₹{spotlightItem.basePriceInPaise / 100}
                     </div>
-                    <div className="flex items-center justify-between text-xs text-[#DFCDB8]">
-                      <span className="flex items-center gap-2">
-                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Payment Modes
-                      </span>
-                      <span className="font-bold text-white">UPI, Cards & Cash</span>
+
+                    <div className="absolute bottom-3 left-3 right-3 text-left">
+                      <h4 className="font-black text-base text-white drop-shadow-md truncate">
+                        {spotlightItem.name}
+                      </h4>
+                      <p className="text-[11px] text-white/80 line-clamp-1">
+                        {spotlightItem.description}
+                      </p>
                     </div>
                   </div>
 
-                  {/* 3D Promo Box */}
-                  <div className="rounded-2xl bg-gradient-to-r from-[#D97736] to-[#C86D51] p-4 text-white shadow-md space-y-1">
-                    <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
-                      <span className="flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5" /> Welcome Special
-                      </span>
-                      <span className="bg-white/20 px-2 py-0.5 rounded-md font-mono text-[10px]">
-                        CODE: KITTU50
-                      </span>
+                  {/* Dish Selector Thumbnails */}
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    <span className="text-[10px] font-bold text-[#DFCDB8] uppercase tracking-wider">
+                      Quick Switch:
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {featuredItems.slice(0, 4).map((item, idx) => (
+                        <button
+                          key={item._id}
+                          onClick={() => setSpotlightIndex(idx)}
+                          className={`w-8 h-8 rounded-xl overflow-hidden border transition-all cursor-pointer ${
+                            spotlightIndex === idx
+                              ? 'border-[#D97736] scale-110 ring-2 ring-[#D97736]/50 shadow-md'
+                              : 'border-white/20 opacity-60 hover:opacity-100'
+                          }`}
+                        >
+                          <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
                     </div>
-                    <p className="text-xs font-medium text-white/90">
-                      Enjoy 50% discount up to ₹100 on your first digital order!
-                    </p>
+                  </div>
+
+                  {/* Quick Add CTA */}
+                  <div className="flex items-center gap-3 pt-2">
+                    <button
+                      onClick={handleSpotlightAdd}
+                      className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-[#D97736] to-[#C86D51] text-white font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg active:scale-95 transition-transform"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Add to Order (₹{spotlightItem.basePriceInPaise / 100})</span>
+                    </button>
+                    <Link
+                      href="/menu"
+                      className="p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white transition-colors cursor-pointer"
+                      title="View all dishes"
+                    >
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -259,16 +399,16 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 3D Featured Menu Highlights */}
+      {/* 3D Category Interactive Filter & Featured Highlights */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FBECE7] border border-[#E6866B]/30 text-xs font-bold uppercase tracking-wider text-[#C86D51] mb-2">
               <Flame className="w-3.5 h-3.5 text-[#D97736] fill-[#D97736]" />
-              <span>Customer Favorites</span>
+              <span>Customer Favorites & 3D Cards</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-[#231709] tracking-tight">
-              Featured Cafe Specialties
+              Kittu Cafe Handcrafted Menu
             </h2>
           </div>
           <Link
@@ -280,10 +420,129 @@ export default function HomePage() {
           </Link>
         </div>
 
+        {/* Category Filter Pills with Smooth Scroll */}
+        <div className="flex items-center gap-2.5 overflow-x-auto pb-4 no-scrollbar mb-8">
+          {CATEGORIES.map((cat) => {
+            const isSelected = selectedCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold whitespace-nowrap transition-all duration-200 cursor-pointer ${
+                  isSelected
+                    ? 'btn-3d-primary text-white shadow-md scale-102'
+                    : 'bg-white border border-[#EBE0D2] text-[#5D4037] hover:border-[#D97736] shadow-xs'
+                }`}
+              >
+                {cat.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* 3D Elevated Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredItems.map((item) => (
+          {filteredItems.map((item) => (
             <ProductCard key={item._id} item={item} />
           ))}
+        </div>
+      </section>
+
+      {/* Coffee & Beverage Showcase Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="rounded-3xl bg-gradient-to-r from-[#1E140B] via-[#2D1B10] to-[#1E140B] text-white p-8 sm:p-12 shadow-2xl relative overflow-hidden border border-[#D97736]/30">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-7 space-y-4">
+              <span className="px-3 py-1 rounded-full bg-[#D97736]/20 text-[#D97736] text-xs font-black uppercase tracking-wider border border-[#D97736]/40">
+                Crafted Sips & Chilled Brews
+              </span>
+              <h3 className="text-2xl sm:text-4xl font-black tracking-tight">
+                From Double-Shot Espressos to Ice-Cold Energy Chills
+              </h3>
+              <p className="text-sm text-[#DFCDB8] leading-relaxed">
+                Whether you need a refreshing Red Bull, an ice-cold Coke, or our signature hand-beaten Hazelnut Frappe, every drink at Kittu Cafe is served at the perfect temperature.
+              </p>
+              <div className="flex flex-wrap gap-3 pt-2">
+                <Link
+                  href="/menu?category=c1"
+                  className="px-5 py-3 rounded-xl btn-3d-accent text-white text-xs font-bold inline-flex items-center gap-2"
+                >
+                  <Coffee className="w-4 h-4 text-amber-200" />
+                  <span>Explore Coffee & Beverages</span>
+                </Link>
+              </div>
+            </div>
+            <div className="lg:col-span-5 grid grid-cols-2 gap-4">
+              <div className="rounded-2xl overflow-hidden border border-white/10 shadow-lg group">
+                <img
+                  src="https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?auto=format&fit=crop&w=600&q=80"
+                  alt="Iced Cold Coffee"
+                  className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="bg-[#120B06] p-2.5 text-center">
+                  <span className="text-xs font-extrabold text-white block">Cold Coffee Frappe</span>
+                  <span className="text-[10px] text-[#D97736] font-bold">₹140</span>
+                </div>
+              </div>
+              <div className="rounded-2xl overflow-hidden border border-white/10 shadow-lg group">
+                <img
+                  src="https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=600&q=80"
+                  alt="Chilled Beverages"
+                  className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="bg-[#120B06] p-2.5 text-center">
+                  <span className="text-xs font-extrabold text-white block">Red Bull & Cold Drinks</span>
+                  <span className="text-[10px] text-[#D97736] font-bold">Chilled Cans</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Customer Testimonials Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center space-y-2 mb-10">
+          <span className="text-xs font-black uppercase tracking-wider text-[#C86D51]">
+            Guest Love & Feedback
+          </span>
+          <h2 className="text-3xl font-black text-[#231709]">What Dausa Loves About Kittu Cafe</h2>
+          <span className="text-[11px] text-[#8D6E63] font-bold block">[Verified Regular Guests • Shiv Colony Dausa]</span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="p-6 rounded-2xl bg-[#FFFEFA] border border-[#EBE0D2] shadow-3d space-y-3 card-3d-tilt">
+            <div className="flex items-center gap-1 text-amber-500">★★★★★</div>
+            <p className="text-xs text-[#5D4037] leading-relaxed italic">
+              "Best cold coffee in Dausa! The ambiance in Shiv Colony is super cozy and the hazelnut frappe is genuinely premium."
+            </p>
+            <div className="pt-2 border-t border-[#EBE0D2]">
+              <span className="text-xs font-black text-[#231709] block">Rohit Sharma</span>
+              <span className="text-[10px] text-[#8D6E63]">Dausa Resident • Regular Guest</span>
+            </div>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-[#FFFEFA] border border-[#EBE0D2] shadow-3d space-y-3 card-3d-tilt">
+            <div className="flex items-center gap-1 text-amber-500">★★★★★</div>
+            <p className="text-xs text-[#5D4037] leading-relaxed italic">
+              "Their farmhouse pizza and grilled paneer tikka sandwich are amazing. Fast preparation and courteous staff."
+            </p>
+            <div className="pt-2 border-t border-[#EBE0D2]">
+              <span className="text-xs font-black text-[#231709] block">Pooja Meena</span>
+              <span className="text-[10px] text-[#8D6E63]">Foodie • Verified Dine-in</span>
+            </div>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-[#FFFEFA] border border-[#EBE0D2] shadow-3d space-y-3 card-3d-tilt">
+            <div className="flex items-center gap-1 text-amber-500">★★★★★</div>
+            <p className="text-xs text-[#5D4037] leading-relaxed italic">
+              "Ordered takeaway online; packaging was intact, drinks were icy cold and the sizzling brownie was top notch."
+            </p>
+            <div className="pt-2 border-t border-[#EBE0D2]">
+              <span className="text-xs font-black text-[#231709] block">Vikram Singh</span>
+              <span className="text-[10px] text-[#8D6E63]">Online Order Customer</span>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -307,7 +566,7 @@ export default function HomePage() {
                   href={BUSINESS_CONFIG.mapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-5 py-3 rounded-xl btn-3d-primary text-white text-xs font-bold flex items-center gap-2 cursor-pointer"
+                  className="px-5 py-3 rounded-xl btn-3d-primary text-white text-xs font-bold flex items-center gap-2 cursor-pointer shadow-md"
                 >
                   <MapPin className="w-4 h-4 text-[#D97736]" />
                   <span>Google Maps Directions</span>
