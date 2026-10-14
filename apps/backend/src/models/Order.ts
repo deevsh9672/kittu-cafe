@@ -43,8 +43,9 @@ export interface IOrderDocument extends Document {
   updatedAt: Date;
 }
 
-const OrderSchema = new Schema<IOrderDocument>(
+const OrderSchema = new Schema<any>(
   {
+    _id: { type: String, default: () => new mongoose.Types.ObjectId().toString() },
     orderNumber: { type: String, required: true, unique: true, index: true },
     customerId: { type: Schema.Types.ObjectId, ref: 'User', index: true },
     customerName: { type: String, required: true },

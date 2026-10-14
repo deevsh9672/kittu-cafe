@@ -97,13 +97,17 @@ export default function CheckoutPage() {
         preparationNotes,
         items: items.map((i) => ({
           menuItemId: i.menuItemId,
+          name: i.name,
+          unitPriceInPaise: i.unitPriceInPaise,
           quantity: i.quantity,
           selectedVariantName: i.selectedVariantName,
           selectedAddOnNames: i.selectedAddOnNames,
+          imageUrl: (i as any).imageUrl || '',
         })),
       };
 
-      const res = await fetch('http://localhost:5000/api/v1/orders', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const res = await fetch(`${apiUrl}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -115,13 +119,15 @@ export default function CheckoutPage() {
         if (typeof window !== 'undefined') {
           try {
             const current = JSON.parse(localStorage.getItem('kittu_shared_orders') || '[]');
-            localStorage.setItem('kittu_shared_orders', JSON.stringify([placed, ...current]));
+            const updated = [placed, ...current.filter((o: any) => o._id !== placed._id)];
+            localStorage.setItem('kittu_shared_orders', JSON.stringify(updated));
+            window.dispatchEvent(new Event('storage'));
           } catch {}
         }
         clearCart();
         router.push(`/orders/${placed._id}/track`);
       } else {
-        // Local fallback order placement
+        // Fallback order placement
         const mockOrder = {
           _id: `ord-${Date.now()}`,
           orderNumber: `KC-2026-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -138,6 +144,7 @@ export default function CheckoutPage() {
             name: i.name,
             quantity: i.quantity,
             totalPriceInPaise: i.unitPriceInPaise * i.quantity,
+            imageUrl: (i as any).imageUrl || '',
           })),
           createdAt: new Date().toISOString(),
         };
@@ -145,6 +152,7 @@ export default function CheckoutPage() {
           try {
             const current = JSON.parse(localStorage.getItem('kittu_shared_orders') || '[]');
             localStorage.setItem('kittu_shared_orders', JSON.stringify([mockOrder, ...current]));
+            window.dispatchEvent(new Event('storage'));
           } catch {}
         }
         clearCart();

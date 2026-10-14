@@ -25,5 +25,11 @@ router.patch(
   requireRoles('admin', 'manager', 'cashier', 'kitchen', 'delivery'),
   OrdersController.adminUpdateStatus
 );
+router.patch(
+  '/admin/:id/payment',
+  authenticate,
+  requireRoles('admin', 'manager', 'cashier'),
+  OrdersController.adminUpdatePayment
+);
 
 export default router;

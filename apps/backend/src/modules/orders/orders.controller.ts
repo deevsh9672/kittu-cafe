@@ -28,7 +28,7 @@ const VALID_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
 };
 
 // In-memory resilient store for local testing or when MongoDB is offline
-const IN_MEMORY_ORDERS: any[] = [
+export const IN_MEMORY_ORDERS: any[] = [
   {
     _id: 'ord-1791975795976',
     orderNumber: 'KC-2026-9597',
@@ -446,12 +446,14 @@ export class OrdersController {
 
   static async adminUpdateStatus(req: Request, res: Response): Promise<void> {
     try {
-      const { status, notes } = req.body as { status: OrderStatus; notes?: string };
+      const { status, notes, paymentStatus } = req.body as { status: OrderStatus; notes?: string; paymentStatus?: any };
       let order: any = null;
 
       if (isDBConnected()) {
         try {
-          order = await OrderModel.findById(req.params.id);
+          order = await OrderModel.findOne({
+            $or: [{ _id: req.params.id }, { orderNumber: req.params.id }],
+          });
         } catch (e) {
           order = null;
         }
@@ -466,8 +468,9 @@ export class OrdersController {
         return;
       }
 
+      const isAdminOrManager = req.user?.role === 'admin' || req.user?.role === 'manager';
       const allowedTransitions = VALID_TRANSITIONS[order.status as OrderStatus] || [];
-      if (!allowedTransitions.includes(status)) {
+      if (!isAdminOrManager && !allowedTransitions.includes(status)) {
         res.status(400).json({
           success: false,
           error: {
@@ -479,16 +482,30 @@ export class OrdersController {
       }
 
       order.status = status;
+      if (paymentStatus) {
+        order.paymentStatus = paymentStatus;
+      } else if (status === 'completed' && order.paymentStatus === 'pending') {
+        order.paymentStatus = 'captured'; // Mark paid upon completion
+      }
+
       if (!order.statusHistory) order.statusHistory = [];
       order.statusHistory.push({
         status,
         changedBy: req.user?.name || req.user?.phone || 'Staff',
         timestamp: new Date(),
-        notes,
+        notes: notes || `Status changed to ${status}`,
       });
 
       if (order.save && typeof order.save === 'function') {
         await order.save();
+      } else if (isDBConnected()) {
+        try {
+          await OrderModel.updateOne(
+            { _id: order._id },
+            { $set: { status: order.status, paymentStatus: order.paymentStatus, statusHistory: order.statusHistory } },
+            { upsert: true }
+          );
+        } catch (e) {}
       }
 
       // If status completed, award loyalty points (1 point per ₹100 spent)
@@ -520,6 +537,52 @@ export class OrdersController {
       res.json({ success: true, message: `Order status updated to ${status}`, data: order });
     } catch (error: any) {
       res.status(500).json({ success: false, error: { code: 'UPDATE_STATUS_ERROR', message: error.message } });
+    }
+  }
+
+  static async adminUpdatePayment(req: Request, res: Response): Promise<void> {
+    try {
+      const { paymentStatus } = req.body;
+      let order: any = null;
+
+      if (isDBConnected()) {
+        try {
+          order = await OrderModel.findOne({
+            $or: [{ _id: req.params.id }, { orderNumber: req.params.id }],
+          });
+        } catch (e) {
+          order = null;
+        }
+      }
+
+      if (!order) {
+        order = IN_MEMORY_ORDERS.find((o) => o._id === req.params.id || o.orderNumber === req.params.id);
+      }
+
+      if (!order) {
+        res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Order not found' } });
+        return;
+      }
+
+      order.paymentStatus = paymentStatus || 'captured';
+
+      if (order.save && typeof order.save === 'function') {
+        await order.save();
+      } else if (isDBConnected()) {
+        try {
+          await OrderModel.updateOne(
+            { _id: order._id },
+            { $set: { paymentStatus: order.paymentStatus } },
+            { upsert: true }
+          );
+        } catch (e) {}
+      }
+
+      emitOrderStatusUpdated(order._id.toString(), order.status, order);
+
+      res.json({ success: true, message: `Payment updated to ${order.paymentStatus}`, data: order });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: { code: 'UPDATE_PAYMENT_ERROR', message: error.message } });
     }
   }
 }

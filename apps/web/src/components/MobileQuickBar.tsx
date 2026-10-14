@@ -4,12 +4,11 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Coffee,
-  ShoppingBag,
-  Sparkles,
-  Clock,
-  Phone,
   Home,
+  Store,
+  Heart,
+  User,
+  ShoppingBag,
 } from 'lucide-react';
 import { useCartStore } from '../store/useCartStore';
 
@@ -31,21 +30,15 @@ export const MobileQuickBar: React.FC = () => {
     { href: '/', label: 'Home', icon: Home, active: pathname === '/' },
     {
       href: '/menu',
-      label: 'Menu',
-      icon: Coffee,
+      label: 'Shop',
+      icon: Store,
       active: pathname.startsWith('/menu'),
     },
     {
       href: '/offers',
-      label: 'Offers',
-      icon: Sparkles,
+      label: 'Favorite',
+      icon: Heart,
       active: pathname === '/offers',
-    },
-    {
-      href: '/orders',
-      label: 'Orders',
-      icon: Clock,
-      active: pathname.startsWith('/orders'),
     },
     {
       href: '/cart',
@@ -54,10 +47,16 @@ export const MobileQuickBar: React.FC = () => {
       active: pathname === '/cart',
       badge: totalCount,
     },
+    {
+      href: '/profile',
+      label: 'Profile',
+      icon: User,
+      active: pathname.startsWith('/profile') || pathname === '/login',
+    },
   ];
 
   return (
-    <div className="sm:hidden fixed bottom-0 inset-x-0 z-40 bg-[#FFFEFA]/95 backdrop-blur-lg border-t border-[#EBE0D2] shadow-2xl px-2 py-1.5 flex items-center justify-around">
+    <div className="sm:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-stone-200/80 shadow-[0_-8px_20px_rgba(0,0,0,0.05)] px-3 py-2 flex items-center justify-around">
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = item.active;
@@ -68,14 +67,18 @@ export const MobileQuickBar: React.FC = () => {
             href={item.href}
             className={`relative flex flex-col items-center py-1 px-3 rounded-2xl transition-all ${
               isActive
-                ? 'text-[#C86D51] font-black'
-                : 'text-[#8D6E63] font-semibold hover:text-[#231709]'
+                ? 'text-[#1B4332] font-black scale-105'
+                : 'text-stone-400 font-semibold hover:text-stone-700'
             }`}
           >
             <div className="relative">
-              <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5]' : 'stroke-[1.8]'}`} />
+              <Icon
+                className={`w-5 h-5 ${
+                  isActive ? 'stroke-[2.5] fill-[#1B4332]/10' : 'stroke-[1.8]'
+                }`}
+              />
               {item.badge !== undefined && item.badge > 0 && (
-                <span className="absolute -top-1.5 -right-2.5 bg-[#D97736] text-white text-[10px] font-black px-1.5 py-0.2 rounded-full min-w-[16px] text-center shadow-xs">
+                <span className="absolute -top-1.5 -right-2 bg-[#1B4332] text-white text-[9px] font-black px-1 py-0.2 rounded-full min-w-[15px] text-center shadow-xs">
                   {item.badge}
                 </span>
               )}

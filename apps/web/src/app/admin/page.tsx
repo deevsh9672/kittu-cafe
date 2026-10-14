@@ -14,40 +14,108 @@ import {
 } from 'lucide-react';
 import { formatPrice } from '../../lib/api';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+
 export default function AdminDashboardPage() {
   const [metrics, setMetrics] = useState({
     today: {
-      totalOrders: 18,
-      revenueInPaise: 425000, // ₹4,250.00
-      pendingCount: 4,
-      completedCount: 14,
-      aovInPaise: 23600, // ₹236.00
-      reservationsToday: 3,
+      totalOrders: 0,
+      revenueInPaise: 0,
+      pendingCount: 0,
+      completedCount: 0,
+      aovInPaise: 0,
+      reservationsToday: 0,
     },
-    lowStockCount: 2,
+    lowStockCount: 0,
     recentOrders: [] as any[],
   });
   const [loading, setLoading] = useState(false);
 
-  const fetchDashboard = () => {
+  const fetchDashboard = async () => {
     setLoading(true);
-    fetch('http://localhost:5000/api/v1/admin/reports/dashboard', {
-      headers: {
-        Authorization: 'Bearer mock_admin_token',
+    let serverData: any = null;
+    try {
+      const res = await fetch(`${API_BASE}/admin/reports/dashboard`, {
+        headers: {
+          Authorization: 'Bearer mock_admin_token',
+        },
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        serverData = data.data;
+      }
+    } catch (err) {
+      console.warn('Dashboard server fetch fallback:', err);
+    }
+
+    // Merge with local shared orders for real-time responsiveness
+    let localShared: any[] = [];
+    if (typeof window !== 'undefined') {
+      try {
+        localShared = JSON.parse(localStorage.getItem('kittu_shared_orders') || '[]');
+      } catch {}
+    }
+
+    const combinedMap = new Map<string, any>();
+    if (serverData?.recentOrders) {
+      for (const ord of serverData.recentOrders) {
+        combinedMap.set(String(ord._id || ord.orderNumber), ord);
+      }
+    }
+    for (const ord of localShared) {
+      const key = String(ord._id || ord.orderNumber);
+      if (!combinedMap.has(key)) {
+        combinedMap.set(key, ord);
+      } else {
+        // Local might have latest status from user click
+        combinedMap.set(key, { ...combinedMap.get(key), ...ord });
+      }
+    }
+
+    const allRecent = Array.from(combinedMap.values()).sort(
+      (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+    );
+
+    const eligibleOrders = allRecent.filter((o) => !['cancelled', 'refunded'].includes(o.status));
+    const calculatedRevenue = eligibleOrders.reduce((acc, o) => acc + (Number(o.totalInPaise) || 0), 0);
+    const pendingCount = allRecent.filter((o) =>
+      ['pending_confirmation', 'confirmed', 'accepted_by_kitchen', 'preparing', 'ready_for_pickup'].includes(o.status)
+    ).length;
+    const completedCount = allRecent.filter((o) => o.status === 'completed').length;
+    const totalOrders = Math.max(allRecent.length, serverData?.today?.totalOrders || 0);
+    const finalRevenue = Math.max(calculatedRevenue, serverData?.today?.revenueInPaise || 0);
+    const finalAov = totalOrders > 0 ? Math.round(finalRevenue / (eligibleOrders.length || 1)) : 0;
+
+    setMetrics({
+      today: {
+        totalOrders,
+        revenueInPaise: finalRevenue,
+        pendingCount: Math.max(pendingCount, serverData?.today?.pendingCount || 0),
+        completedCount: Math.max(completedCount, serverData?.today?.completedCount || 0),
+        aovInPaise: finalAov,
+        reservationsToday: serverData?.today?.reservationsToday || 0,
       },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.data) {
-          setMetrics(data.data);
-        }
-      })
-      .catch((err) => console.warn('Using seeded dashboard metrics:', err))
-      .finally(() => setLoading(false));
+      lowStockCount: serverData?.lowStockCount || 0,
+      recentOrders: allRecent.slice(0, 8),
+    });
+    setLoading(false);
   };
 
   useEffect(() => {
     fetchDashboard();
+    const interval = setInterval(fetchDashboard, 4000);
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'kittu_shared_orders') {
+        fetchDashboard();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorage);
+    };
   }, []);
 
   return (
@@ -70,7 +138,7 @@ export default function AdminDashboardPage() {
           </Link>
           <button
             onClick={fetchDashboard}
-            className="p-2 rounded-xl bg-white border border-[#EBE0D2] hover:bg-[#FAF6F0] text-[#4E342E] transition-colors"
+            className="p-2 rounded-xl bg-white border border-[#EBE0D2] hover:bg-[#FAF6F0] text-[#4E342E] transition-colors cursor-pointer"
             title="Refresh Metrics"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -155,27 +223,58 @@ export default function AdminDashboardPage() {
           </div>
 
           <div className="space-y-3">
-            <div className="p-4 rounded-xl bg-[#FAF6F0] border border-[#EBE0D2] flex items-center justify-between">
-              <div>
-                <span className="font-mono text-xs font-bold text-[#231709]">KC-839210</span>
-                <p className="text-xs text-[#5D4037]">2x Cappuccino, 1x Veg Farmhouse Pizza</p>
-                <span className="text-[11px] text-[#C86D51] font-semibold">Table T1 • Dine-in</span>
+            {metrics.recentOrders.length === 0 ? (
+              <div className="p-4 rounded-xl bg-[#FAF6F0] text-center text-xs text-stone-500 font-medium">
+                No orders placed yet today.
               </div>
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
-                Preparing
-              </span>
-            </div>
+            ) : (
+              metrics.recentOrders.map((ord: any) => {
+                const itemsSummary = Array.isArray(ord.items)
+                  ? ord.items.map((i: any) => `${i.quantity}x ${i.name}`).join(', ')
+                  : 'Order items';
+                const locationSummary =
+                  ord.orderType === 'dine_in'
+                    ? `${ord.tableNumber || 'Dine-in'}`
+                    : `${ord.orderType?.replace('_', ' ') || 'Takeaway'}`;
 
-            <div className="p-4 rounded-xl bg-[#FAF6F0] border border-[#EBE0D2] flex items-center justify-between">
-              <div>
-                <span className="font-mono text-xs font-bold text-[#231709]">KC-920412</span>
-                <p className="text-xs text-[#5D4037]">1x Hazelnut Cold Coffee, 1x Paneer Sandwich</p>
-                <span className="text-[11px] text-emerald-700 font-semibold">Delivery • Shiv Colony</span>
-              </div>
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
-                Confirmed
-              </span>
-            </div>
+                return (
+                  <div
+                    key={ord._id || ord.orderNumber}
+                    className="p-4 rounded-xl bg-[#FAF6F0] border border-[#EBE0D2] flex items-center justify-between"
+                  >
+                    <div className="max-w-[70%]">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-bold text-[#231709]">
+                          {ord.orderNumber || ord._id}
+                        </span>
+                        <span className="text-[11px] font-bold text-[#C86D51]">
+                          {formatPrice(ord.totalInPaise)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#5D4037] truncate">{itemsSummary}</p>
+                      <span className="text-[11px] text-[#C86D51] font-semibold capitalize">
+                        {ord.customerName} • {locationSummary}
+                      </span>
+                    </div>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-bold capitalize ${
+                        ord.status === 'completed'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : ord.status === 'preparing' || ord.status === 'accepted_by_kitchen'
+                          ? 'bg-amber-100 text-amber-800'
+                          : ord.status === 'ready_for_pickup'
+                          ? 'bg-blue-100 text-blue-800'
+                          : ord.status === 'cancelled'
+                          ? 'bg-rose-100 text-rose-800'
+                          : 'bg-[#FBECE7] text-[#C86D51]'
+                      }`}
+                    >
+                      {ord.status?.replace('_', ' ')}
+                    </span>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
 

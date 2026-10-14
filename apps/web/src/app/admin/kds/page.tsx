@@ -52,9 +52,12 @@ export default function KdsPage() {
     return () => clearInterval(timer);
   }, []);
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+const SOCKET_BASE = process.env.NEXT_PUBLIC_SOCKET_URL || (typeof window !== 'undefined' ? window.location.origin.replace(':3000', ':5000').replace(':3001', ':5000') : 'http://localhost:5000');
+
   // Fetch KDS queue from API & listen on WebSockets
   const fetchKds = () => {
-    fetch('http://localhost:5000/api/v1/kds/orders', {
+    fetch(`${API_BASE}/kds/orders`, {
       headers: { Authorization: 'Bearer mock_staff_token' },
     })
       .then((res) => res.json())
@@ -74,7 +77,7 @@ export default function KdsPage() {
         );
         const unique = new Map<string, any>();
         for (const o of [...activeLocal, ...serverOrders, ...DEMO_KDS_ORDERS]) {
-          const key = o._id || o.orderNumber;
+          const key = String(o._id || o.orderNumber);
           if (!unique.has(key)) unique.set(key, o);
         }
         setOrders(Array.from(unique.values()));
@@ -85,22 +88,28 @@ export default function KdsPage() {
   useEffect(() => {
     fetchKds();
 
-    const socket = io('http://localhost:5000');
-    socket.emit('join:kitchen');
+    let socket: any = null;
+    try {
+      socket = io(SOCKET_BASE);
+      socket.emit('join:kitchen');
 
-    socket.on('order:created', (newOrder: any) => {
-      setOrders((prev) => [...prev, newOrder]);
-      if (soundEnabled) {
-        console.log('[KDS Sound Alert] Chime sound triggered for new incoming order!');
-      }
-    });
+      socket.on('order:created', (newOrder: any) => {
+        setOrders((prev) => [...prev, newOrder]);
+        if (soundEnabled) {
+          console.log('[KDS Sound Alert] Chime sound triggered for new incoming order!');
+        }
+      });
 
-    socket.on('order:status_updated', (data: any) => {
-      fetchKds();
-    });
+      socket.on('order:status_updated', (data: any) => {
+        fetchKds();
+      });
+    } catch {}
+
+    const interval = setInterval(fetchKds, 5000);
 
     return () => {
-      socket.disconnect();
+      clearInterval(interval);
+      if (socket) socket.disconnect();
     };
   }, [soundEnabled]);
 
@@ -108,12 +117,23 @@ export default function KdsPage() {
     // Optimistic UI update
     setOrders((prev) =>
       prev
-        .map((o) => (o._id === orderId ? { ...o, status: newStatus } : o))
+        .map((o) => (o._id === orderId || o.orderNumber === orderId ? { ...o, status: newStatus } : o))
         .filter((o) => newStatus !== 'ready_for_pickup') // Remove from active KDS once ready
     );
 
+    if (typeof window !== 'undefined') {
+      try {
+        const current = JSON.parse(localStorage.getItem('kittu_shared_orders') || '[]');
+        const updated = current.map((o: any) =>
+          o._id === orderId || o.orderNumber === orderId ? { ...o, status: newStatus } : o
+        );
+        localStorage.setItem('kittu_shared_orders', JSON.stringify(updated));
+        window.dispatchEvent(new Event('storage'));
+      } catch {}
+    }
+
     try {
-      await fetch(`http://localhost:5000/api/v1/kds/orders/${orderId}/status`, {
+      await fetch(`${API_BASE}/kds/orders/${orderId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

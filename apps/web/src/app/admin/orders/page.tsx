@@ -88,6 +88,9 @@ const DEMO_ORDERS: any[] = [
   },
 ];
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+const SOCKET_BASE = process.env.NEXT_PUBLIC_SOCKET_URL || (typeof window !== 'undefined' ? window.location.origin.replace(':3000', ':5000').replace(':3001', ':5000') : 'http://localhost:5000');
+
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<any[]>(DEMO_ORDERS);
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -101,7 +104,7 @@ export default function AdminOrdersPage() {
 
     // 1. Fetch from admin endpoint
     try {
-      const res = await fetch('http://localhost:5000/api/v1/orders/admin/all', {
+      const res = await fetch(`${API_BASE}/orders/admin/all`, {
         headers: { Authorization: 'Bearer mock_admin_token' },
       });
       const data = await res.json();
@@ -109,9 +112,9 @@ export default function AdminOrdersPage() {
         remoteOrders = data.data.orders;
       }
     } catch {
-      // Try fallback endpoint
+      // Try fallback customer endpoint
       try {
-        const res = await fetch('http://localhost:5000/api/v1/orders');
+        const res = await fetch(`${API_BASE}/orders`);
         const data = await res.json();
         if (data.success && Array.isArray(data.data?.orders)) {
           remoteOrders = data.data.orders;
@@ -131,7 +134,7 @@ export default function AdminOrdersPage() {
     const allCombined = [...localShared, ...remoteOrders, ...DEMO_ORDERS];
     const uniqueMap = new Map<string, any>();
     for (const ord of allCombined) {
-      const key = ord._id || ord.orderNumber;
+      const key = String(ord._id || ord.orderNumber);
       if (!uniqueMap.has(key)) {
         uniqueMap.set(key, ord);
       }
@@ -149,9 +152,9 @@ export default function AdminOrdersPage() {
     fetchOrders();
 
     // Setup Socket.IO listener for real-time live events
-    let socket: Socket;
+    let socket: Socket | null = null;
     try {
-      socket = io('http://localhost:5000');
+      socket = io(SOCKET_BASE);
       socket.emit('join:admin');
 
       socket.on('order:created', (newOrder: any) => {
@@ -194,18 +197,72 @@ export default function AdminOrdersPage() {
   }, []);
 
   const handleUpdateStatus = async (orderId: string, newStatus: OrderStatus) => {
+    const isCompleted = newStatus === 'completed';
     setOrders((prev) =>
-      prev.map((o) => (o._id === orderId ? { ...o, status: newStatus } : o))
+      prev.map((o) =>
+        o._id === orderId || o.orderNumber === orderId
+          ? { ...o, status: newStatus, paymentStatus: isCompleted ? 'captured' : o.paymentStatus }
+          : o
+      )
     );
 
+    if (typeof window !== 'undefined') {
+      try {
+        const current = JSON.parse(localStorage.getItem('kittu_shared_orders') || '[]');
+        const updated = current.map((o: any) =>
+          o._id === orderId || o.orderNumber === orderId
+            ? { ...o, status: newStatus, paymentStatus: isCompleted ? 'captured' : o.paymentStatus }
+            : o
+        );
+        localStorage.setItem('kittu_shared_orders', JSON.stringify(updated));
+        window.dispatchEvent(new Event('storage'));
+      } catch {}
+    }
+
     try {
-      await fetch(`http://localhost:5000/api/v1/orders/admin/${orderId}/status`, {
+      await fetch(`${API_BASE}/orders/admin/${orderId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           Authorization: 'Bearer mock_admin_token',
         },
         body: JSON.stringify({ status: newStatus }),
+      });
+    } catch (e) {
+      // Local fallback
+    }
+  };
+
+  const handleUpdatePayment = async (orderId: string, newPaymentStatus: 'captured' | 'pending' | 'failed') => {
+    setOrders((prev) =>
+      prev.map((o) =>
+        o._id === orderId || o.orderNumber === orderId
+          ? { ...o, paymentStatus: newPaymentStatus }
+          : o
+      )
+    );
+
+    if (typeof window !== 'undefined') {
+      try {
+        const current = JSON.parse(localStorage.getItem('kittu_shared_orders') || '[]');
+        const updated = current.map((o: any) =>
+          o._id === orderId || o.orderNumber === orderId
+            ? { ...o, paymentStatus: newPaymentStatus }
+            : o
+        );
+        localStorage.setItem('kittu_shared_orders', JSON.stringify(updated));
+        window.dispatchEvent(new Event('storage'));
+      } catch {}
+    }
+
+    try {
+      await fetch(`${API_BASE}/orders/admin/${orderId}/payment`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer mock_admin_token',
+        },
+        body: JSON.stringify({ paymentStatus: newPaymentStatus }),
       });
     } catch (e) {
       // Local fallback
@@ -367,7 +424,33 @@ export default function AdminOrdersPage() {
                           </span>
                         ))}
                       </td>
-                      <td className="p-4 font-black text-[#231709]">{formatPrice(order.totalInPaise)}</td>
+                      <td className="p-4">
+                        <span className="font-black text-[#231709] block">{formatPrice(order.totalInPaise)}</span>
+                        <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                          <span
+                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                              order.paymentStatus === 'captured'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-amber-100 text-amber-800'
+                            }`}
+                          >
+                            {order.paymentStatus === 'captured'
+                              ? 'PAID'
+                              : order.paymentMethod === 'cash_on_delivery'
+                              ? 'COD / UNPAID'
+                              : 'PENDING'}
+                          </span>
+                          {order.paymentStatus !== 'captured' && (
+                            <button
+                              onClick={() => handleUpdatePayment(order._id, 'captured')}
+                              className="text-[10px] font-bold text-emerald-700 hover:text-emerald-900 underline cursor-pointer"
+                              title="Mark this order as paid"
+                            >
+                              Mark Paid
+                            </button>
+                          )}
+                        </div>
+                      </td>
                       <td className="p-4">
                         <span
                           className={`px-2.5 py-1 rounded-full text-[11px] font-bold inline-block capitalize ${
@@ -416,6 +499,15 @@ export default function AdminOrdersPage() {
                             className="px-2.5 py-1.5 bg-emerald-700 text-white rounded-lg font-bold hover:bg-emerald-800 cursor-pointer"
                           >
                             Mark Delivered ✓
+                          </button>
+                        )}
+                        {order.status !== 'completed' && order.status !== 'cancelled' && (
+                          <button
+                            onClick={() => handleUpdateStatus(order._id, 'completed')}
+                            className="px-2 py-1 text-[11px] bg-emerald-50 text-emerald-800 border border-emerald-300 rounded-lg font-bold hover:bg-emerald-100 cursor-pointer"
+                            title="Instantly complete order"
+                          >
+                            Complete
                           </button>
                         )}
                       </td>
